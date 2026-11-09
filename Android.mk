@@ -6,11 +6,13 @@ LOCAL_SRC_FILES := main.cpp \
                    mod/logger.cpp \
                    mod/config.cpp \
                    mod/texture_loader.cpp \
+                   mod/music_player.cpp \
                    mod/thirdparty/imgui/imgui.cpp \
                    mod/thirdparty/imgui/imgui_draw.cpp \
                    mod/thirdparty/imgui/imgui_tables.cpp \
                    mod/thirdparty/imgui/imgui_widgets.cpp \
                    plugin-sdk/renderware/imgui/imgui_impl_renderware.cpp \
+                   plugin-sdk/renderware/imgui/imgui_shared.cpp \
                    src/aurora_config.cpp \
                    src/aurora_ribbon.cpp \
                    src/aurora_conditions.cpp \
@@ -23,4 +25,6 @@ ifeq ($(TARGET_ARCH_ABI),armeabi-v7a)
 endif
 LOCAL_C_INCLUDES += $(LOCAL_PATH) $(LOCAL_PATH)/src $(LOCAL_PATH)/plugin-sdk $(LOCAL_PATH)/mod/thirdparty
 LOCAL_LDLIBS += -llog
+# Keep libc++ and other static-library symbols private, so plugins built with different NDKs can't interpose each other.
+LOCAL_LDFLAGS += -Wl,--exclude-libs,ALL
 include $(BUILD_SHARED_LIBRARY)
