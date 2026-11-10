@@ -28,29 +28,6 @@ Tap **Aurora** at the bottom-left of the screen to open the controls. Changes ap
 
 See the [configuration guide](docs/configuration.md) for every INI key, default, range, menu control, weather ID, and troubleshooting step.
 
-## Building from source
-
-The plugin uses C++17 and `ndk-build`. CI uses Android NDK r27c and builds both ABIs.
-
-On Windows, put your NDK directory in `NDKPath.txt`, then run from the repository root with PowerShell 7:
-
-```powershell
-pwsh -NoProfile -File build.ps1
-```
-
-You can also invoke an NDK installation directly, as CI does:
-
-```sh
-ndk-build NDK_PROJECT_PATH=. APP_BUILD_SCRIPT=Android.mk NDK_APPLICATION_MK=Application.mk NDK_DEBUG=0
-```
-
-Outputs:
-
-- `libs/armeabi-v7a/libauroralights.so`
-- `libs/arm64-v8a/libauroralights.so`
-
-`Android.mk` lists the plugin's sources explicitly. The template's image loader and music player are not part of this build.
-
 ## License & Credits
 
 - Aurora Lights: Licensed under the [MIT](LICENSE) License.
