@@ -5,8 +5,6 @@ LOCAL_MODULE    := auroralights
 LOCAL_SRC_FILES := main.cpp \
                    mod/logger.cpp \
                    mod/config.cpp \
-                   mod/texture_loader.cpp \
-                   mod/music_player.cpp \
                    mod/thirdparty/imgui/imgui.cpp \
                    mod/thirdparty/imgui/imgui_draw.cpp \
                    mod/thirdparty/imgui/imgui_tables.cpp \
