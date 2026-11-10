@@ -6,8 +6,7 @@ The in-game menu controls colors, movement, softness, regional ambient lighting,
 
 ## Requirements
 
-- GTA: San Andreas for Android with AML installed. The code targets v2.00 and v2.10 on ARM32, and v2.10 on ARM64.
-- Android 7.0 (API 24) or later, matching the native build target.
+- GTA: San Andreas for Android with AML installed. The code targets v2.00 and v2.10.
 - A plugin binary that matches the **game's ABI**, which may differ from the phone's architecture.
 
 | Game ABI              | Release file                     |
