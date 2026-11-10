@@ -1,6 +1,7 @@
 #pragma once
 
 #include "aurora_config.h"
+#include "aurora_scene.h"
 #include <cstddef>
 #include <cstdint>
 
@@ -16,11 +17,14 @@ struct RenderStats {
     bool shouldRenderResult;
     float alphaMult;
     const char *blockReason;
+    int nightKey;
+    int patchCount;
 };
 
 void Init();
 void Render(const AuroraConfig &cfg);
 void Shutdown();
 const RenderStats &GetStats();
+AuroraScene::Color EnvironmentContribution(const AuroraConfig &cfg);
 
 } // namespace AuroraRenderer

@@ -15,6 +15,9 @@ LOCAL_SRC_FILES := main.cpp \
                    plugin-sdk/renderware/imgui/imgui_shared.cpp \
                    src/aurora_config.cpp \
                    src/aurora_ribbon.cpp \
+                   src/aurora_scene.cpp \
+                   src/aurora_blur.cpp \
+                   src/aurora_lighting.cpp \
                    src/aurora_conditions.cpp \
                    src/aurora_renderer.cpp \
                    src/aurora_menu.cpp

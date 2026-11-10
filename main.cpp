@@ -7,6 +7,7 @@
 #include "src/aurora_config.h"
 #include "src/aurora_menu.h"
 #include "src/aurora_renderer.h"
+#include "src/aurora_lighting.h"
 
 MYMOD(xavion.auroralights, AuroraLights, 1.0, Xavion)
 
@@ -47,6 +48,7 @@ ON_MOD_LOAD() {
     AuroraConfig_Save(g_AuroraConfig, &g_AmlConfig);
 
     AuroraRenderer::Init();
+    AuroraLighting::Init(&g_AuroraConfig);
     AuroraMenu::Init(&g_AmlConfig);
 
     // 3D Scene Rendering: Render the Aurora Borealis in the 3D sky

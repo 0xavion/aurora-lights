@@ -2,6 +2,8 @@
 
 An aurora lights plugin for GTA: San Andreas (Android)
 
+See [configuration](docs/configuration.md) for the controls and defaults.
+
 ## License & Credits
 
 - Aurora Lights: Licensed under the [MIT](/LICENSE) License

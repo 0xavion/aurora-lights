@@ -4,6 +4,10 @@
 #include <array>
 #include <vector>
 
+namespace AuroraScene {
+struct Layout;
+}
+
 namespace AuroraRibbon {
 
 struct Point {
@@ -20,7 +24,8 @@ constexpr int TextureWidth = 1024;
 constexpr int TextureHeight = 128;
 
 // Camera-independent world field: looking around never moves the aurora itself.
-void BuildMesh(const AuroraConfig &cfg, float timeSec, std::vector<Vertex> &vertices, std::vector<uint16_t> &indices);
+void AppendMesh(const AuroraConfig &cfg, const AuroraScene::Layout &layout, float seconds, float opacity,
+                std::vector<Vertex> &vertices, std::vector<uint16_t> &indices);
 void BuildCurtainPixels(std::vector<Pixel> &pixels);
 float SkyScale(const std::vector<Vertex> &field, Point eye, float farClip);
 Point ProjectToSky(Point world, Point eye, float scale);

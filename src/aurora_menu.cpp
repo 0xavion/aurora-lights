@@ -1,4 +1,5 @@
 #include "aurora_menu.h"
+#include "aurora_lighting.h"
 #include "aurora_renderer.h"
 #include <algorithm>
 #include <mod/config.h>
@@ -50,6 +51,7 @@ void DrawControlDialog(AuroraConfig &cfg, float scale, float screenWidth, float 
                                stats.blockReason ? stats.blockReason : "Unknown");
             ImGui::Text("Clock Hr: %d | Area: %d (0=outdoors)", stats.gameHour, stats.currArea);
         }
+        ImGui::Text("Night layout: %d | Groups: %d", stats.nightKey, stats.patchCount);
         ImGui::Separator();
 
         if (ImGui::Button(cfg.alwaysActive ? "Disable 24/7 Mode (Follow Clock & Zone)"
@@ -71,6 +73,19 @@ void DrawControlDialog(AuroraConfig &cfg, float scale, float screenWidth, float 
                 ImGui::SliderFloat("Curtain Height", &cfg.curtainHeight, 40.0f, 400.0f, "%.0f");
                 ImGui::SliderFloat("Curtain Radius", &cfg.curtainRadius, 200.0f, 1200.0f, "%.0f");
                 ImGui::SliderInt("Ribbon Segments", &cfg.ribbonSegments, 16, 128);
+                float blurPercent = cfg.auroraBlur * 100;
+                if (ImGui::SliderFloat("Aurora Blur", &blurPercent, 0, 100, "%.0f%%"))
+                    cfg.auroraBlur = blurPercent / 100;
+                ImGui::SliderFloat("Variation", &cfg.variationStrength, 0, 1, "%.2f");
+                ImGui::SliderInt("Aurora Groups", &cfg.patchCount, 1, 6);
+                if (ImGui::Button("New Layout"))
+                    cfg.placementSeed = (cfg.placementSeed + 1) % 1000000001;
+                ImGui::SameLine();
+                ImGui::Text("Seed: %d", cfg.placementSeed);
+                ImGui::Checkbox("Environment Illumination", &cfg.enableEnvironmentLight);
+                ImGui::SliderFloat("Environment Light Strength", &cfg.environmentLightStrength, 0, 1, "%.2f");
+                if (!AuroraLighting::Available())
+                    ImGui::TextWrapped("Environment illumination is unavailable on this game build (see AML log).");
 
                 ImGui::Separator();
                 ImGui::Text("Color Gradient:");

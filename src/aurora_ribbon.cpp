@@ -1,11 +1,11 @@
 #include "aurora_ribbon.h"
+#include "aurora_scene.h"
 #include <cmath>
 
 namespace AuroraRibbon {
 namespace {
 constexpr float Pi = 3.14159265358979323846f;
 constexpr int Rows = 9;
-constexpr int Layers = 3;
 
 float Smooth(float lo, float hi, float x) {
     const float t = std::clamp((x - lo) / (hi - lo), 0.0f, 1.0f);
@@ -36,51 +36,59 @@ float Noise(float u, int cells, uint32_t seed) {
 uint8_t Byte(float x) { return static_cast<uint8_t>(std::clamp(x, 0.0f, 255.0f)); }
 } // namespace
 
-void BuildMesh(const AuroraConfig &cfg, float timeSec, std::vector<Vertex> &vertices, std::vector<uint16_t> &indices) {
-    vertices.clear();
-    indices.clear();
+void AppendMesh(const AuroraConfig &cfg, const AuroraScene::Layout &layout, float seconds, float opacity,
+                std::vector<Vertex> &vertices, std::vector<uint16_t> &indices) {
+    opacity = Bounded(opacity, 0, 1, 0);
+    if (opacity <= 0)
+        return;
     const int segments = std::clamp(cfg.ribbonSegments, 16, 128) * 4;
-    const float radius = Bounded(cfg.curtainRadius, 100.0f, 1500.0f, 550.0f) * 20.0f;
+    const float scale = Bounded(cfg.curtainRadius, 100, 1500, 550) / 550;
     const float height = Bounded(cfg.curtainHeight, 20.0f, 500.0f, 140.0f) * 28.0f;
     const float speed = Bounded(cfg.waveSpeed, 0.0f, 5.0f, 1.0f);
-    const float time = std::isfinite(timeSec) ? timeSec * speed : 0.0f;
-    const float phase = time * 0.035f;
+    const float time = std::isfinite(seconds) ? std::clamp(seconds, -1e7f, 1e7f) * speed : 0;
+    const float variation = Bounded(cfg.variationStrength, 0, 1, 0.65f);
     const float intensity = Bounded(cfg.intensity, 0.0f, 2.5f, 1.0f);
-    vertices.reserve(Layers * (segments + 1) * Rows);
-    indices.reserve(Layers * segments * (Rows - 1) * 6);
+    const int count = std::clamp(layout.count, 0, AuroraScene::MaxPatches);
+    if (vertices.size() + count * (segments + 1) * Rows >= 65536)
+        return;
+    vertices.reserve(vertices.size() + count * (segments + 1) * Rows);
+    indices.reserve(indices.size() + count * segments * (Rows - 1) * 6);
 
-    // Fixed San Andreas world coordinates, well above terrain and mountains.
-    // Only the render projection is compressed to fit RenderWare's far plane.
-    for (int layer = 0; layer < Layers; ++layer) {
+    for (int layer = 0; layer < count; ++layer) {
+        const auto &patch = layout.patches[layer];
         const auto base = static_cast<uint16_t>(vertices.size());
-        const float seed = layer * 2.17f;
-        const float start = layer == 1 ? 2.75f : (layer == 2 ? -1.0f : -0.45f);
-        const float sweep = layer == 2 ? 3.6f : 4.15f;
-        const float layerRadius = radius * (layer == 2 ? 0.58f : 1.0f + layer * 0.12f);
+        const float seed = patch.phase;
+        const float localSpeed = 1 + (patch.speed - 1) * variation;
+        const float phase = time * 0.035f * localSpeed;
+        const float hx = std::cos(patch.heading), hy = std::sin(patch.heading);
+        const float pulse = 1 - variation + variation * AuroraScene::Pulse(patch, seconds, speed);
         for (int col = 0; col <= segments; ++col) {
             const float u = static_cast<float>(col) / segments;
-            const float angle = start + sweep * u;
-            const float folds = 0.15f * std::sin(u * 5.0f * Pi + seed + phase) +
-                                0.065f * std::sin(u * 13.0f * Pi - seed - phase * 0.7f);
-            const float r = layerRadius * (1.0f + folds);
-            const float bottom = 4000.0f + layer * 550.0f + 650.0f * std::sin(u * 4.0f * Pi + seed + phase * 0.6f) +
-                                 140.0f * std::sin(u * 17.0f * Pi + phase);
-            const float rayHeight = height * (0.75f + 0.35f * Noise(u, 19, 73u + layer));
+            const float along = (u - 0.5f) * patch.length * scale;
+            const float across =
+                patch.bend * scale * (std::sin(u * 3 * Pi + seed + phase) + 0.30f * std::sin(u * 11 * Pi - phase));
+            const float bottom =
+                patch.center.z + 350 * std::sin(u * 5 * Pi + seed + phase * 0.6f) + 100 * std::sin(u * 17 * Pi + phase);
+            const float rayHeight =
+                height * (1 + (patch.height - 1) * variation) * (0.75f + 0.35f * Noise(u, 19, 73u + layer));
             const float endFade = Smooth(0, 0.10f, u) * (1.0f - Smooth(0.88f, 1, u));
             const float foldsAlpha = 0.58f + 0.42f * Noise(u + phase * 0.006f, 23, 193u + layer);
+            const float travelling =
+                1 - variation * 0.35f * (0.5f + 0.5f * std::sin(u * 6 * Pi - time * 0.12f * localSpeed + seed));
             for (int row = 0; row < Rows; ++row) {
                 const float v = static_cast<float>(row) / (Rows - 1);
-                const float lean = v * v * layerRadius * 0.08f * std::sin(u * 6.0f * Pi + seed + phase);
+                const float lean = v * v * patch.bend * scale * 0.5f * std::sin(u * 6 * Pi + seed + phase);
                 Vertex vert{};
-                vert.position = {(r + lean) * std::cos(angle) + (layer == 2 ? -2000.0f : 0.0f),
-                                 (r + lean) * std::sin(angle), bottom + v * rayHeight};
+                vert.position = {patch.center.x * scale + hx * along - hy * (across + lean),
+                                 patch.center.y * scale + hy * along + hx * (across + lean), bottom + v * rayHeight};
                 const float mix = Smooth(0.18f, 0.95f, v);
+                const float tint = patch.hue * variation;
                 vert.color = {Byte(cfg.baseColorR * (1 - mix) + cfg.topColorR * mix),
-                              Byte(cfg.baseColorG * (1 - mix) + cfg.topColorG * mix),
-                              Byte(cfg.baseColorB * (1 - mix) + cfg.topColorB * mix),
-                              Byte(210.0f * intensity * endFade * foldsAlpha * Smooth(0, 0.12f, v) *
-                                   (1 - Smooth(0.62f, 1, v)) * (layer == 2 ? 0.60f : 1.0f))};
-                vert.u = u * 3.0f + layer * 0.37f + time * 0.004f;
+                              Byte((cfg.baseColorG * (1 - mix) + cfg.topColorG * mix) * (1 - tint)),
+                              Byte((cfg.baseColorB * (1 - mix) + cfg.topColorB * mix) * (1 + tint)),
+                              Byte(230.0f * intensity * opacity * endFade * foldsAlpha * pulse * travelling *
+                                   patch.brightness * Smooth(0, 0.12f, v) * (1 - Smooth(0.62f, 1, v)))};
+                vert.u = u * (2.4f + variation * seed * 0.1f) + seed + time * 0.004f * localSpeed;
                 vert.v = v;
                 vertices.push_back(vert);
             }

@@ -29,6 +29,14 @@ struct AuroraConfig {
     uint8_t topColorR;
     uint8_t topColorG;
     uint8_t topColorB;
+
+    // [Placement], [Visuals], [Lighting]
+    int placementSeed = 1337;
+    int patchCount = 3;
+    float variationStrength = 0.65f;
+    float auroraBlur = 0.25f;
+    bool enableEnvironmentLight = true;
+    float environmentLightStrength = 0.12f;
 };
 
 class Config;

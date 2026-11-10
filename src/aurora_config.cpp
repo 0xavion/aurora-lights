@@ -38,6 +38,12 @@ void AuroraConfig_SetDefaults(AuroraConfig &cfg) {
     cfg.topColorR = 140;
     cfg.topColorG = 50;
     cfg.topColorB = 200;
+    cfg.placementSeed = 1337;
+    cfg.patchCount = 3;
+    cfg.variationStrength = 0.65f;
+    cfg.auroraBlur = 0.25f;
+    cfg.enableEnvironmentLight = true;
+    cfg.environmentLightStrength = 0.12f;
 }
 
 void AuroraConfig_Load(AuroraConfig &cfg, Config *amlCfg) {
@@ -77,6 +83,14 @@ void AuroraConfig_Load(AuroraConfig &cfg, Config *amlCfg) {
     cfg.topColorR = static_cast<uint8_t>(std::clamp(amlCfg->GetInt("TopColorR", cfg.topColorR, "Visuals"), 0, 255));
     cfg.topColorG = static_cast<uint8_t>(std::clamp(amlCfg->GetInt("TopColorG", cfg.topColorG, "Visuals"), 0, 255));
     cfg.topColorB = static_cast<uint8_t>(std::clamp(amlCfg->GetInt("TopColorB", cfg.topColorB, "Visuals"), 0, 255));
+    cfg.placementSeed = std::clamp(amlCfg->GetInt("Seed", cfg.placementSeed, "Placement"), 0, 1000000000);
+    cfg.patchCount = std::clamp(amlCfg->GetInt("PatchCount", cfg.patchCount, "Placement"), 1, 6);
+    cfg.variationStrength =
+        SafeClampFloat(amlCfg->GetFloat("VariationStrength", cfg.variationStrength, "Visuals"), 0, 1, 0.65f);
+    cfg.auroraBlur = SafeClampFloat(amlCfg->GetFloat("AuroraBlur", cfg.auroraBlur, "Visuals"), 0, 1, 0.25f);
+    cfg.enableEnvironmentLight = amlCfg->GetBool("EnableEnvironmentLight", cfg.enableEnvironmentLight, "Lighting");
+    cfg.environmentLightStrength = SafeClampFloat(
+        amlCfg->GetFloat("EnvironmentLightStrength", cfg.environmentLightStrength, "Lighting"), 0, 1, 0.12f);
 }
 
 void AuroraConfig_Save(const AuroraConfig &cfg, Config *amlCfg) {
@@ -88,18 +102,24 @@ void AuroraConfig_Save(const AuroraConfig &cfg, Config *amlCfg) {
     auto saveBool = [&](const char *key, bool val, const char *sec) {
         if (auto *e = amlCfg->Bind(key, val, sec)) {
             e->SetBool(val);
+            if (Config::pLastEntry == e)
+                Config::pLastEntry = nullptr;
             delete e;
         }
     };
     auto saveInt = [&](const char *key, int val, const char *sec) {
         if (auto *e = amlCfg->Bind(key, val, sec)) {
             e->SetInt(val);
+            if (Config::pLastEntry == e)
+                Config::pLastEntry = nullptr;
             delete e;
         }
     };
     auto saveFloat = [&](const char *key, float val, const char *sec) {
         if (auto *e = amlCfg->Bind(key, val, sec)) {
             e->SetFloat(val);
+            if (Config::pLastEntry == e)
+                Config::pLastEntry = nullptr;
             delete e;
         }
     };
@@ -128,6 +148,12 @@ void AuroraConfig_Save(const AuroraConfig &cfg, Config *amlCfg) {
     saveInt("TopColorR", cfg.topColorR, "Visuals");
     saveInt("TopColorG", cfg.topColorG, "Visuals");
     saveInt("TopColorB", cfg.topColorB, "Visuals");
+    saveInt("Seed", cfg.placementSeed, "Placement");
+    saveInt("PatchCount", cfg.patchCount, "Placement");
+    saveFloat("VariationStrength", cfg.variationStrength, "Visuals");
+    saveFloat("AuroraBlur", cfg.auroraBlur, "Visuals");
+    saveBool("EnableEnvironmentLight", cfg.enableEnvironmentLight, "Lighting");
+    saveFloat("EnvironmentLightStrength", cfg.environmentLightStrength, "Lighting");
 
     amlCfg->Save();
 }
